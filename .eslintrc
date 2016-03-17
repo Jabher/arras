@@ -9,9 +9,11 @@
     },
     "env": {
         "browser": true,
+        "node": true,
         "commonjs": true,
         "es6": true,
-        "shared-node-browser": true
+        "shared-node-browser": true,
+        "mocha": true
     },
     "globals": {
         "__dirname": true

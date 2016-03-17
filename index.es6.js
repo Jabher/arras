@@ -1,3 +1,7 @@
+import fs from 'fs';
+import path from 'path';
+import URL from 'url';
+
 import 'babel-polyfill';
 import Koa from 'koa';
 import convert from 'koa-convert';
@@ -6,9 +10,8 @@ import bodyParserMiddleware from 'koa-bodyparser';
 import staticMiddleware from 'koa-static';
 import HTTPCodes from './http_codes';
 
-import fs from 'fs';
-import path from 'path';
-import URL from 'url';
+
+import config from 'config';
 
 function getActionName(action, hasId) {
     switch (action) {
@@ -19,7 +22,7 @@ function getActionName(action, hasId) {
         case 'PUT':
             return hasId ? 'update' : undefined;
         case 'DELETE':
-            return hasId ? 'destroy' : undefined;
+            return hasId ? 'destroy' : 'destroyAll';
     }
 }
 
@@ -51,15 +54,16 @@ app.use(function(ctx, next) {
     if (!actionFn)
         return next();
 
+    const props = {...query, ...ctx.request.body, id};
+
     return Promise.resolve()
-        .then(() => actionFn({...query, id, args}))
+        .then(() => args.length ? actionFn(props, ...args) : actionFn(props))
         .then(
-            body => Object.assign(ctx, {body}),
+            body => Object.assign(ctx, body && body.status ? body : {body}),
             e =>
                 Object.assign(ctx, e instanceof Error
-                    ? {body: `${e.constructor.name}: ${e.message}`, status: HTTPCodes.INTERNAL_SERVER_ERROR}
-                    : {body: e && e.message || e, status: e && e.status || HTTPCodes.BAD_REQUEST}))
-        .then(next);
+                    ? ctx.throw(`${e.constructor.name}: ${e.message}`, HTTPCodes.INTERNAL_SERVER_ERROR)
+                    : ctx.throw(e && e.message || e, e && e.status || HTTPCodes.BAD_REQUEST)))
 });
 
-app.listen(8088);
+app.listen(config.server.port);
