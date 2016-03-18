@@ -1,19 +1,17 @@
 import config from 'config';
 
-const props = config.webpack;
-const DEV = config.env.dev;
-
 import loaders from './webpack.loaders';
 import plugins from './webpack.plugins';
 import postcss from './webpack.postcss';
 
+const props = config.webpack;
+const DEV = config.env.dev;
+
 export default {
-    ...props,
+    ...props, plugins, postcss,
     module: {
         loaders
     },
     cache: DEV,
-    debug: DEV,
-    plugins: plugins,
-    postcss
+    debug: DEV
 }
