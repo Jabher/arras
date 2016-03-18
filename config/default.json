@@ -1,8 +1,0 @@
-{
-    "server": {
-        "port": 8088
-    },
-    "db": {
-        "path": "http://neo4j:password@localhost:7474"
-    }
-}

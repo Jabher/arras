@@ -1,2 +1,2 @@
 require('babel-register');
-require('./index.es6.js');
+require('./_application/');

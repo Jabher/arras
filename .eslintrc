@@ -16,7 +16,8 @@
         "mocha": true
     },
     "globals": {
-        "__dirname": true
+        "__dirname": true,
+        "__DEV__": true
     },
     "extends": "eslint:recommended",
     "rules": {
