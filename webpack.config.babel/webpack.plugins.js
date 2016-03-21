@@ -12,7 +12,7 @@ const basePlugins = [
         __DEV__: String(DEV)
     }),
     new HtmlWebpackPlugin({
-        template: path.resolve(__dirname, './webapp/index.html.jade')
+        template: path.resolve(__dirname, '../webapp/index.html.jade')
     })
 ];
 
