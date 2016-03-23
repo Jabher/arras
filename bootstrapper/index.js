@@ -45,3 +45,4 @@ app.use(config.env.dev
     : require('./loader-middleware').default);
 
 app.listen(config.server.port);
+console.log(`Server listen to ${config.server.port} port`);
