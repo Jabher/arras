@@ -9,7 +9,7 @@ const baseDir = process.cwd();
 
 export const paths = {
     baseDir,
-    controllersDir: `${baseDir}/controllers`,
+    controllersDir: `${baseDir}/endpoints`,
     webappDir: `${baseDir}/webapp`,
     webpackConfigDir: `${baseDir}/webpack.config.babel`,
     staticDir: `${baseDir}/static`
