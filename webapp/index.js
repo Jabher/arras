@@ -1,6 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import Root from './root';
+import Root from './util/root';
 
 ReactDOM.render(<Root/>,
-    document.querySelector('#reactContainer'));
+    document.body.querySelector('#root'));

@@ -1,30 +1,23 @@
 import fs from 'fs';
-import path from 'path';
 import URL from 'url';
 
 import HTTPCodes from './http_codes';
+import config from '../config/default';
 
-const baseDir = process.cwd();
-
-export default function(ctx, next) {
+export default function LoaderMiddleware(ctx, next) {
     const {method} = ctx;
     const {pathname, query} = URL.parse(ctx.url, true);
     const [controllerName, rawId, ...args] = pathname.split('/').filter(a => a);
     const parsedId = parseInt(rawId);
     const id = Number.isNaN(parsedId) ? rawId : parsedId;
 
-    const controllerPath = path.resolve(`${baseDir}/api/${controllerName}.js`);
+    const controllerPath = `${config.paths.controllersDir}/${controllerName}.js`;
     if (!fs.existsSync(controllerPath))
         return next();
 
     const actionName = getActionName(method, id !== undefined);
     if (!actionName)
         return ctx.throw(HTTPCodes.BAD_REQUEST, 'illegal action');
-
-    for (const key of Object.keys(require.cache))
-        if (key.startsWith(`${baseDir}/api`) || key.startsWith(`${baseDir}/models`))
-            Reflect.deleteProperty(require.cache, key);
-
 
     const actionFn = require(controllerPath)[actionName];
     if (!actionFn)

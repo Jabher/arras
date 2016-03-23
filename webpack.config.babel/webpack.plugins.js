@@ -1,5 +1,3 @@
-import HtmlWebpackPlugin from 'html-webpack-plugin';
-import path from 'path';
 import webpack, {optimize} from 'webpack';
 import config from 'config';
 
@@ -10,9 +8,6 @@ const basePlugins = [
     new webpack.DefinePlugin({
         'process.env.NODE_ENV': DEV ? '"development"' : '"production"',
         __DEV__: String(DEV)
-    }),
-    new HtmlWebpackPlugin({
-        template: path.resolve(__dirname, '../webapp/index.html.jade')
     })
 ];
 

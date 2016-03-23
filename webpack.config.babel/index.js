@@ -1,17 +1,25 @@
 import config from 'config';
-
 import loaders from './webpack.loaders';
-import plugins from './webpack.plugins';
-import postcss from './webpack.postcss';
 
-const props = config.webpack;
+export {default as plugins} from './webpack.plugins';
+export {default as postcss} from './webpack.postcss';
+
 const DEV = config.env.dev;
 
-export default {
-    ...props, plugins, postcss,
-    module: {
-        loaders
-    },
-    cache: DEV,
-    debug: DEV
-}
+export const context = config.paths.baseDir;
+
+export const entry = {
+    vendor: ['babel-polyfill', 'whatwg-fetch'],
+    webapp: [config.paths.webappDir],
+    hotreload: DEV ? ['webpack-hot-middleware/client'] : []
+};
+export const output = {
+    path: config.paths.staticDir,
+    publicPath: '/',
+    filename: '[name].js',
+    chunkFilename: '[id].[name].js'
+};
+export const devtool = 'source-map';
+export const module = {loaders};
+export const cache = DEV;
+export const debug = DEV;

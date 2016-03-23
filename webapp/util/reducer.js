@@ -1,6 +1,6 @@
 import {combineReducers} from 'redux';
 
-const reducersContext = require.context('./reducers', false, /^\.\/([^\/])*\.js/);
+const reducersContext = require.context('../reducers', false, /^\.\/([^\/])*\.js/);
 
 export default combineReducers(reducersContext.keys()
     .reduce((acc, key) => ({
