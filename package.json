@@ -4,7 +4,8 @@
   "description": "A boilerplate to work on your code, not trying to understand someone else's",
   "main": "index.js",
   "scripts": {
-    "test": "mocha ./__test__/*.js --opts ./__test__/mocha.opts"
+    "test": "mocha ./__test__/*.js --opts ./__test__/mocha.opts",
+    "start": "node ."
   },
   "author": "",
   "license": "ISC",
