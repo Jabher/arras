@@ -1,10 +1,12 @@
 import fs from 'fs';
 import URL from 'url';
 
-import HTTPCodes from './http_codes';
-import config from '../config/default';
+import HTTPCodes from './util/http_codes';
+import config from 'config';
 
-export default function LoaderMiddleware(ctx, next) {
+export default async function LoaderMiddleware(ctx, next) {
+    if (ctx.res.headersSent)
+        return;
     const {method} = ctx;
     const {pathname, query} = URL.parse(ctx.url, true);
     const [controllerName, rawId, ...args] = pathname.split('/').filter(a => a);
@@ -12,27 +14,30 @@ export default function LoaderMiddleware(ctx, next) {
     const id = Number.isNaN(parsedId) ? rawId : parsedId;
 
     const controllerPath = `${config.paths.controllersDir}/${controllerName}.js`;
+
     if (!fs.existsSync(controllerPath))
-        return next();
+        return await next();
 
     const actionName = getActionName(method, id !== undefined);
     if (!actionName)
         return ctx.throw(HTTPCodes.BAD_REQUEST, 'illegal action');
 
-    const actionFn = require(controllerPath)[actionName];
-    if (!actionFn)
-        return next();
+    try {
+        const actionFn = require(controllerPath)[actionName];
+        if (!actionFn)
+            return await next();
+        else
+            ctx.body = await actionFn({...query, ...ctx.request.body, id}, ...args);
+    } catch (e) {
+        if (e instanceof Error) {
+            ctx.body = `${e.constructor.name}: ${e.message}`;
+            ctx.status = HTTPCodes.INTERNAL_SERVER_ERROR;
+        } else {
+            ctx.body = e && e.message || e;
+            ctx.status = e && e.status || HTTPCodes.BAD_REQUEST;
+        }
+    }
 
-    const props = {...query, ...ctx.request.body, id};
-
-    return Promise.resolve()
-        .then(() => args.length ? actionFn(props, ...args) : actionFn(props))
-        .then(
-            body => Object.assign(ctx, body && body.status ? body : {body}),
-            e =>
-                Object.assign(ctx, e instanceof Error
-                    ? {body: `${e.constructor.name}: ${e.message}`, status: HTTPCodes.INTERNAL_SERVER_ERROR}
-                    : {body: e && e.message || e, status: e && e.status || HTTPCodes.BAD_REQUEST}))
 }
 
 

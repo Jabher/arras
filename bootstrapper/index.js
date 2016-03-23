@@ -17,19 +17,12 @@ const compiler = webpack(webpackConfig);
 const app = new Koa();
 
 if (config.env.dev)
-    app.use((ctx, next) => {
-        console.log(ctx.req.url)
-
-        for (const key of Object.keys(require.cache))
+    app.use(function invalidateRequireCache(ctx, next) {
+            for (const key of Object.keys(require.cache))
             if (key.startsWith(`${config.paths.baseDir}`) && !key.startsWith(`${config.paths.baseDir}/node_modules`))
                 Reflect.deleteProperty(require.cache, key);
-        next();
+        return next();
     });
-
-
-app.use(config.env.dev
-    ? (...args) => require('./react-router-middleware').default(...args)
-    : require('./react-router-middleware').default);
 
 if (config.env.dev)
     app.use(convert(webpackDevMiddleware(compiler, {
@@ -39,6 +32,10 @@ if (config.env.dev)
         .use(convert(webpackHotMiddleware(compiler)));
 else
     app.use(convert(staticMiddleware('static')));
+
+app.use(config.env.dev
+    ? (...args) => require('./react-router-middleware').default(...args)
+    : require('./react-router-middleware').default);
 
 app.use(convert(sessionMiddleware(app)));
 app.use(convert(bodyParserMiddleware()));

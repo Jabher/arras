@@ -10,11 +10,10 @@ export const context = config.paths.baseDir;
 
 export const entry = {
     vendor: ['babel-polyfill', 'whatwg-fetch'],
-    webapp: [config.paths.webappDir],
-    hotreload: DEV ? ['webpack-hot-middleware/client'] : []
+    webapp: DEV ? ['webpack-hot-middleware/client', config.paths.webappDir] : config.paths.webappDir
 };
 export const output = {
-    path: config.paths.staticDir,
+    path: '/',
     publicPath: '/',
     filename: '[name].js',
     chunkFilename: '[id].[name].js'

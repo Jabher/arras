@@ -1,7 +1,8 @@
-import React, {Component} from 'react';
+import React, {Component, PropTypes} from 'react';
+import {Link} from 'react-router';
 
 export default class Index extends Component {
     render() {
-        return <div>Hello World</div>
+        return <Link to="/hello">see hello</Link>
     }
 }

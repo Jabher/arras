@@ -6,14 +6,8 @@ const storeCreator = compose(
             action instanceof Function
                 ? action(dispatch, getState)
                 : next(action)),
-    ...(window.devToolsExtension
-        ? [window.devToolsExtension()]
+    ...(global.devToolsExtension
+        ? [global.devToolsExtension()]
         : []))(createStore);
 
-const store = storeCreator(require('./reducer').default);
-
-export default store
-
-if (__DEV__ && module.hot)
-    module.hot.accept('./reducer', () =>
-        store.replaceReducer(require('./reducer').default));
+export default storeCreator;

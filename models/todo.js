@@ -1,4 +1,4 @@
-import {Record, acceptsTransaction} from '../abstract_record';
+import {Record, acceptsTransaction} from './_abstract_record';
 
 const todoIncrement = 1;
 
