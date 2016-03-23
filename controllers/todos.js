@@ -1,4 +1,4 @@
-import Todo from '../models/todo'
+import Todo from './models/todo'
 
 export const create = (props) => new Todo(props).save().then(body => ({status: 201, body}));
 export const read = ({id}) => Todo.byId(id);
