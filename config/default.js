@@ -2,7 +2,9 @@ export const env = {
     dev: true
 };
 export const server = {
-    port: 8088
+    port: 8088,
+    hostname: undefined,
+    https: false
 };
 
 const baseDir = process.cwd();

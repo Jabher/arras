@@ -5,6 +5,8 @@ import sessionMiddleware from 'koa-session';
 import bodyParserMiddleware from 'koa-bodyparser';
 import staticMiddleware from 'koa-static';
 import config from 'config';
+import http from 'http';
+import https from 'https';
 
 import webpack from 'webpack';
 import * as webpackConfig from '../webpack.config.babel';
@@ -18,7 +20,7 @@ const app = new Koa();
 
 if (config.env.dev)
     app.use(function invalidateRequireCache(ctx, next) {
-            for (const key of Object.keys(require.cache))
+        for (const key of Object.keys(require.cache))
             if (key.startsWith(`${config.paths.baseDir}`) && !key.startsWith(`${config.paths.baseDir}/node_modules`))
                 Reflect.deleteProperty(require.cache, key);
         return next();
@@ -44,4 +46,8 @@ app.use(config.env.dev
     ? (...args) => require('./loader-middleware').default(...args)
     : require('./loader-middleware').default);
 
-app.listen(config.server.port);
+const {port, hostname, https: isHttps} = config.server;
+
+const server = (isHttps ? https : http).createServer(app.callback());
+server.listen({port, hostname}, () =>
+    console.log(`app is listening on ${hostname || '0.0.0.0'}:${port}`));
