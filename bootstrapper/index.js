@@ -35,16 +35,12 @@ if (config.env.dev)
 else
     app.use(convert(staticMiddleware('static')));
 
-app.use(config.env.dev
-    ? (...args) => require('./react-router-middleware').default(...args)
-    : require('./react-router-middleware').default);
+app.use(require('./react-router-middleware').default);
 
 app.use(convert(sessionMiddleware(app)));
 app.use(convert(bodyParserMiddleware()));
 
-app.use(config.env.dev
-    ? (...args) => require('./loader-middleware').default(...args)
-    : require('./loader-middleware').default);
+app.use(require('./loader-middleware').default);
 
 const {port, hostname, https: isHttps} = config.server;
 

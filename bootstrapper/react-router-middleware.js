@@ -5,22 +5,31 @@ import webpack from 'webpack';
 import MemoryFS from 'memory-fs';
 import {context, output, module, plugins} from '../webpack.config.babel'
 
-const routesPath = `${config.paths.webappDir}/routes.js`;
+import watcher from './util/webpack-watcher';
 
+
+const routesPath = `${config.paths.webappDir}/routes.js`;
 const compiler = webpack({
     context, output, module, plugins, target: 'node',
     entry: {routes: `./${require('path').relative(context, routesPath)}`}
 });
 compiler.outputFileSystem = new MemoryFS();
+const watchdog = watcher(compiler);
 
-const compilerLoad = new Promise(res => compiler.run((err) =>
-    res(err ? null : eval(compiler.outputFileSystem.readFileSync('/routes.js').toString()).default)));
+const generateCompiledModule = () => compiledModule ||
+eval(compiler.outputFileSystem.readFileSync('/routes.js').toString()).default;
+
+let compiledModule = null;
+
+watchdog.on('built', () => compiledModule = generateCompiledModule());
+watchdog.on('reset', () => compiledModule = null);
 
 export default async function ReactRouterMiddleware(ctx, next) {
-    const routes = await compilerLoad;
+    if (!compiledModule)
+        await new Promise(res => watchdog.once('built', res));
+    compiledModule = generateCompiledModule();
+    const routes = compiledModule;
 
-    if (!routes)
-        await next();
     const [error, redirectLocation, renderProps] = await new Promise(res =>
         match({routes, location: ctx.req.url}, (...args) => res(args)));
 
