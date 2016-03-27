@@ -1,9 +1,9 @@
-import '../index.es6.js';
+import '../index.js';
 import fetch from 'node-fetch';
 import {expect} from 'chai';
 import config from 'config';
 
-import HTTPCodes from '../http_codes';
+import HTTPCodes from '../bootstrapper/util/http_codes';
 
 const basepath = `http://${process.NODE_ENV || 'localhost'}:${config.server.port}/todos`;
 
