@@ -2,14 +2,14 @@ import React, {Component} from 'react';
 import {Provider} from 'react-redux';
 import {Router, browserHistory} from 'react-router';
 
-import storeCreator from './store';
-import routes from '../routes';
+import {reducer, storeCreator} from './storeCreator';
+import {routes} from './routes';
 
-const store = storeCreator(require('./reducer').default);
+const store = storeCreator(reducer);
 
 if (__DEV__ && module.hot)
-    module.hot.accept('./reducer', () =>
-        store.replaceReducer(require('./reducer').default));
+    module.hot.accept('./storeCreator', () =>
+        store.replaceReducer(require('./storeCreator').reducer));
 
 export default class Root extends Component {
     render() {

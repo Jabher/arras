@@ -1,18 +1,40 @@
-import EventEmitter from 'events'
+import webpack from 'webpack';
+import MemoryFS from 'memory-fs';
 
-export default function watch(compiler) {
+import EventEmitter from 'events';
+import config from 'config';
+
+import fetch from 'node-fetch';
+
+import {context, output, module} from '../../webpack.config.babel';
+
+export default function watch(path) {
     const buildEventEmitter = new EventEmitter();
-    compiler.plugin('invalid', invalidPlugin);
-    compiler.plugin('watch-run', asyncInvalidPlugin);
-    compiler.plugin('run', asyncInvalidPlugin);
+    let compiledModule = null;
+    let compileSuccessFlag = false;
+    buildEventEmitter.on('built', () => compiledModule = generate());
+    buildEventEmitter.on('reset', () => {
+        compiledModule = null;
+        compileSuccessFlag = false;
+    });
 
-    var compileSuccessFlag = false;
+    const webpackCompiler = webpack({
+        context, output, module, plugins: [new webpack.DefinePlugin({
+            'process.env.NODE_ENV': config.env.dev ? '"development"' : '"production"',
+            __DEV__: String(config.env.dev)
+        })], target: 'node',
+        entry: {index: `./${require('path').relative(context, path)}`}
+    });
 
-    buildEventEmitter.on('reset', () => compileSuccessFlag = false);
+    webpackCompiler.outputFileSystem = new MemoryFS();
+    webpackCompiler.plugin('invalid', invalidPlugin);
+    webpackCompiler.plugin('watch-run', asyncInvalidPlugin);
+    webpackCompiler.plugin('run', asyncInvalidPlugin);
 
-    compiler.watch({aggregateTimeout: 200}, (err) => { if (err) console.error(err); });
 
-    compiler.plugin('done', () => {
+    webpackCompiler.watch({aggregateTimeout: 200}, (err) => { if (err) console.error(err); });
+
+    webpackCompiler.plugin('done', () => {
         compileSuccessFlag = true;
         process.nextTick(() => {
             if (compileSuccessFlag)
@@ -20,7 +42,18 @@ export default function watch(compiler) {
         });
     });
 
-    return buildEventEmitter;
+    return () => compiledModule
+        ? Promise.resolve(compiledModule)
+        : new Promise(res => buildEventEmitter.on('built', () => res(generate())));
+
+    function generate(force = false) {
+        return (!force && compiledModule) ||
+            (compiledModule = evaluate(webpackCompiler.outputFileSystem.readFileSync('/index.js').toString()));
+    }
+
+    function evaluate(file) {
+        eval(file)
+    }
 
     function invalidPlugin() {
         buildEventEmitter.emit('reset');

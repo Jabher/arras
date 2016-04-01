@@ -2,11 +2,10 @@ import React from 'react'
 import {RouterContext} from 'react-router';
 import {entry, output} from '../../webpack.config.babel/'
 import {Provider} from 'react-redux';
-import store from './redux-store';
 import {renderToString, renderToStaticMarkup} from 'react-dom/server';
 
 //noinspection Eslint - due to unavoidable dangerouslySetInnerHTML usage
-const HTMLContainer = ({app, children: scripts}) =>
+const HTMLContainer = ({app, store, children: scripts}) =>
     <html>
     <head>
         <meta charSet="utf-8"/>
@@ -20,12 +19,12 @@ const HTMLContainer = ({app, children: scripts}) =>
     </body>
     </html>;
 
-export default function renderToHTML(renderProps) {
+export default function renderToHTML(renderProps, store) {
     const scripts = Object.keys(entry)
         .map(entry => output.filename.replace('[name]', entry))
         .map((entry, i) => <script key={i} src={entry}></script>);
 
     const routerContext = <RouterContext {...renderProps} />;
 
-    return `<!DOCTYPE html>${renderToStaticMarkup(<HTMLContainer app={routerContext}>{scripts}</HTMLContainer>)}`;
+    return `<!DOCTYPE html>${renderToStaticMarkup(<HTMLContainer app={routerContext} store={store}>{scripts}</HTMLContainer>)}`;
 }

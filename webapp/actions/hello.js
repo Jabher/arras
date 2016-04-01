@@ -4,3 +4,6 @@ export function changeTarget(target) {
         target
     }
 }
+export const loadTargetAsync = () => async function (dispatch) {
+    dispatch(await fetch('/hello'))  
+};

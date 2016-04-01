@@ -8,6 +8,10 @@ export default class Index extends Component {
         target: PropTypes.string.isRequired,
         dispatch: PropTypes.func.isRequired
     };
+    constructor(...args) {
+        super(...args);
+        this.props.dispatch(helloActions.loadTargetAsync())
+    }
     render() {
         return <div>
             Hello {this.props.target}
