@@ -11,6 +11,8 @@ if (__DEV__ && module.hot)
     module.hot.accept('./reducer', () =>
         store.replaceReducer(require('./reducer').default));
 
+/*this component should be untouched
+ same routing component is used on back-end and should be changed simulateously*/
 export default class Root extends Component {
     render() {
         return <Provider store={store}>

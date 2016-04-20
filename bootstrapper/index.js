@@ -1,49 +1,52 @@
 import 'babel-polyfill';
 import Koa from 'koa';
-import convert from 'koa-convert';
-import sessionMiddleware from 'koa-session';
-import bodyParserMiddleware from 'koa-bodyparser';
-import staticMiddleware from 'koa-static';
-import config from 'config';
 import http from 'http';
 import https from 'https';
 
-import webpack from 'webpack';
-import * as webpackConfig from '../webpack.config.babel';
+import config from 'config';
+import * as webpackConfig from '../webpack.config';
 
-import webpackDevMiddleware from 'koa-webpack-dev-middleware';
-import webpackHotMiddleware from 'koa-webpack-hot-middleware';
+const enhancerNames = [
+    'baselevel',
+    'api',
+    config.env.dev ? 'static-with-jit' : 'static-after-precompile',
+    'react-isomorphic'
+];
 
-const compiler = webpack(webpackConfig);
+const enhancers = enhancerNames
+    .map(filename => require(`./enhancers/${filename}.js`).default)
+    .map(Enhancer => new Enhancer(config, webpackConfig));
 
-const app = new Koa();
+(async function () {
+    const app = new Koa();
 
-if (config.env.dev)
-    app.use(function invalidateRequireCache(ctx, next) {
-        for (const key of Object.keys(require.cache))
-            if (key.startsWith(`${config.paths.baseDir}`) && !key.startsWith(`${config.paths.baseDir}/node_modules`))
-                Reflect.deleteProperty(require.cache, key);
-        return next();
-    });
+    for (const enhancer of enhancers)
+    try {
+        await enhancer.beforeStart(app);
+    } catch (e) {
+        console.log(e);
+        console.log(e.stack);
+    }
 
-if (config.env.dev)
-    app.use(convert(webpackDevMiddleware(compiler, {
-            noInfo: true,
-            publicPath: webpackConfig.output.publicPath
-        })))
-        .use(convert(webpackHotMiddleware(compiler)));
-else
-    app.use(convert(staticMiddleware('static')));
+    console.log('enhanced');
+    
+    const {port, hostname, https: isHttps} = config.server;
+    const server = (isHttps ? https : http).createServer(app.callback());
+    await new Promise(resolve => server.listen({port, hostname}, resolve));
 
-app.use(require('./react-router-middleware').default);
+    console.log(`server is listening on ${hostname}:${port}`);
+    for (const enhancer of enhancers)
+        await enhancer.afterStart(app);
 
-app.use(convert(sessionMiddleware(app)));
-app.use(convert(bodyParserMiddleware()));
+    await new Promise(resolve => process.once('SIGINT', resolve));
 
-app.use(require('./loader-middleware').default);
+    console.log('received SIGINT, stopping');
+    
+    for (const enhancer of enhancers)
+        await enhancer.beforeEnd(app);
 
-const {port, hostname, https: isHttps} = config.server;
+    await new Promise(resolve => server.close(resolve));
 
-const server = (isHttps ? https : http).createServer(app.callback());
-server.listen({port, hostname}, () =>
-    console.log(`app is listening on ${hostname || '0.0.0.0'}:${port}`));
+    for (const enhancer of enhancers)
+        await enhancer.afterEnd(app);
+})();

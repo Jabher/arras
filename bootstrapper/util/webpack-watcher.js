@@ -1,5 +1,7 @@
 import EventEmitter from 'events'
 
+const aggregateTimeout = 200;
+
 export default function watch(compiler) {
     const buildEventEmitter = new EventEmitter();
     compiler.plugin('invalid', invalidPlugin);
@@ -10,7 +12,7 @@ export default function watch(compiler) {
 
     buildEventEmitter.on('reset', () => compileSuccessFlag = false);
 
-    compiler.watch({aggregateTimeout: 200}, (err) => { if (err) console.error(err); });
+    const watchdog = compiler.watch({aggregateTimeout}, (err) => { if (err) console.error(err); });
 
     compiler.plugin('done', () => {
         compileSuccessFlag = true;
@@ -19,6 +21,8 @@ export default function watch(compiler) {
                 buildEventEmitter.emit('built');
         });
     });
+
+    buildEventEmitter.close = ::watchdog.close;
 
     return buildEventEmitter;
 

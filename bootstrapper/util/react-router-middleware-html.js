@@ -1,31 +1,47 @@
 import React from 'react'
 import {RouterContext} from 'react-router';
-import {entry, output} from '../../webpack.config.babel/'
+import {combineReducers} from 'redux';
 import {Provider} from 'react-redux';
-import store from './redux-store';
 import {renderToString, renderToStaticMarkup} from 'react-dom/server';
+import Helmet from 'react-helmet';
 
-//noinspection Eslint - due to unavoidable dangerouslySetInnerHTML usage
-const HTMLContainer = ({app, children: scripts}) =>
-    <html>
-    <head>
-        <meta charSet="utf-8"/>
-        <meta httpEquiv="X-UA-Compatible" content="IE=edge"/>
-        <meta name="description" content=""/>
-        <meta name="viewport" content="width=device-width, initial-scale=1"/>
-    </head>
-    <body>
-    <div id="root" dangerouslySetInnerHTML={{__html: renderToString(<Provider store={store}>{app}</Provider>)}}></div>
-    {scripts}
-    </body>
-    </html>;
 
-export default function renderToHTML(renderProps) {
-    const scripts = Object.keys(entry)
-        .map(entry => output.filename.replace('[name]', entry))
-        .map((entry, i) => <script key={i} src={entry}></script>);
+export default function renderer(config, {entry, output}) {
+    const storeCreatorPath = `${config.paths.webappDir}/_util/store`;
+    const reducersPath = `${config.paths.webappDir}/reducers`;
 
-    const routerContext = <RouterContext {...renderProps} />;
+    //noinspection JSFileReferences
+    const reducer = combineReducers(require('fs').readdirSync(reducersPath)
+        .filter(file => file.endsWith('.js'))
+        .reduce((acc, file) => ({
+            ...acc,
+            [file.replace(/\.js$/, '')]: require(`${reducersPath}/${file}`).default
+        }), {}));
 
-    return `<!DOCTYPE html>${renderToStaticMarkup(<HTMLContainer app={routerContext}>{scripts}</HTMLContainer>)}`;
+    const store = require(storeCreatorPath).default(reducer);
+
+    return function renderToHTML(renderProps) {
+        const scripts = Object.keys(entry)
+            .map(entry => output.filename.replace('[name]', entry))
+            .map((entry, i) => <script key={i} src={entry}></script>);
+
+        const contents = renderToString(<Provider store={store}><RouterContext {...renderProps} /></Provider>);
+
+        const head = Helmet.rewind();
+        const attrs = head.htmlAttributes.toComponent();
+
+        return `<!DOCTYPE html>${renderToStaticMarkup(<html {...attrs}>
+        <head>
+            <meta charSet="utf-8"/>
+            <meta httpEquiv="X-UA-Compatible" content="IE=edge"/>
+            {head.title.toComponent()}
+            {head.meta.toComponent()}
+            {head.link.toComponent()}
+        </head>
+        <body>
+        <div id="root" dangerouslySetInnerHTML={{__html: contents}}></div>
+        {scripts}
+        </body>
+        </html>)}`;
+    }
 }

@@ -20,7 +20,8 @@
     },
     "globals": {
         "__dirname": true,
-        "__DEV__": true
+        "__DEV__": true,
+        "module": true
     },
     "extends": ["eslint:recommended", "plugin:react/recommended"],
     "rules": {
