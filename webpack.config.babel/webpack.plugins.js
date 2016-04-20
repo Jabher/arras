@@ -12,7 +12,7 @@ const basePlugins = [
 ];
 
 const devPlugins = [
-    new optimize.OccurenceOrderPlugin(),
+    new optimize.OccurrenceOrderPlugin(),
     new webpack.HotModuleReplacementPlugin(),
     new webpack.NoErrorsPlugin()
 ];
